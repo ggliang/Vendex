@@ -1,4 +1,5 @@
 library(dplyr)
+library(lubridate)
 Machines <- read.csv("./machine_data.csv")
 #1. [2 points] General overview of the data: 
 
@@ -37,8 +38,21 @@ Products %>%
   head(1)
 
 #Transactional data
-
+transactional <- read.csv("./transactional_data.csv")
 #f. Restricting the transactional data to March 2017, what’s the average daily items
-#among small and big machines?. Why do you think there is such a difference? Give at least 2 possible reasons.
+#among small and big machines?. 
+#transactional <- transactional[1:10000,]
+
+#transactional <- left_join(transactional,Machines[,c('machine','small_machine')],by='machine')
+transactional %>% 
+  filter(month(as.Date(date))==3 & year(as.Date(date))==2017) %>% 
+  group_by(machine) %>% 
+  summarise(sales = n(),active = unique(day(as.Date(date)))) %>% 
+  summarise(sales = unique(sales),active_days = n()) %>%
+  left_join(Machines[,c('machine','small_machine')],by='machine') %>% 
+  group_by(small_machine) %>% 
+  summarise(mean(sales/active_days))
+  
+#Why do you think there is such a difference? Give at least 2 possible reasons.
 #Note: To calculate daily sales consider only the “active days” of a machine to exclude machine failures. For that, divide the number of items sold by a machine by the total number of “distinct” days.
 #Hint: Check function month() to do the date restriction.
