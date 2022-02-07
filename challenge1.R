@@ -57,15 +57,24 @@ transactional %>%
 #Note: To calculate daily sales consider only the “active days” of a machine to exclude machine failures. For that, divide the number of items sold by a machine by the total number of “distinct” days.
 #Hint: Check function month() to do the date restriction.
 
+
+daily_active_machines <- transactional %>% 
+  filter(month(as.Date(date)) %in%c(1:4) & year(as.Date(date))==2017) %>% 
+  left_join(Machines[,c('machine','small_machine')],by='machine') %>%
+  group_by(as.Date(date)) %>% 
+  summarise(unique(machine)) %>% 
+  summarise(active_machines = n())
+
 daily_sales_type <- transactional %>% 
   filter(month(as.Date(date)) %in%c(1:4) & year(as.Date(date))==2017) %>% 
   left_join(Products[,c('product_name','type_drink_snack')],by='product_name') %>% 
   group_by(as.Date(date), type_drink_snack) %>% 
-  summarise(n()) 
+  summarise(total_sales = n()) 
 
-
+daily_sales_type <- left_join(daily_sales_type,daily_active_machines,by='as.Date(date)')
+daily_sales_type$daily_sales = daily_sales_type$total_sales/daily_sales_type$active_machines
 library(ggplot2)
-ggplot(daily_sales_type, aes(x = daily_sales_type$`as.Date(date)`, y = daily_sales_type$`n()`, colour = daily_sales_type$type_drink_snack)) +
+ggplot(daily_sales_type, aes(x = daily_sales_type$`as.Date(date)`, y = daily_sales_type$daily_sales, colour = daily_sales_type$type_drink_snack)) +
   geom_line()
 
 
