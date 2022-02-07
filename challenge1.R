@@ -56,3 +56,17 @@ transactional %>%
 #Why do you think there is such a difference? Give at least 2 possible reasons.
 #Note: To calculate daily sales consider only the “active days” of a machine to exclude machine failures. For that, divide the number of items sold by a machine by the total number of “distinct” days.
 #Hint: Check function month() to do the date restriction.
+
+daily_sales_type <- transactional %>% 
+  filter(month(as.Date(date)) %in%c(1:4) & year(as.Date(date))==2017) %>% 
+  left_join(Products[,c('product_name','type_drink_snack')],by='product_name') %>% 
+  group_by(as.Date(date), type_drink_snack) %>% 
+  summarise(n()) 
+
+
+library(ggplot2)
+ggplot(daily_sales_type, aes(x = daily_sales_type$`as.Date(date)`, y = daily_sales_type$`n()`, colour = daily_sales_type$type_drink_snack)) +
+  geom_line()
+
+
+
