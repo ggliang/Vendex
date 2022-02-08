@@ -54,6 +54,9 @@ transactional %>%
   summarise(mean(sales/active_days))
   
 #Why do you think there is such a difference? Give at least 2 possible reasons.
+
+######Add comment here
+
 #Note: To calculate daily sales consider only the “active days” of a machine to exclude machine failures. For that, divide the number of items sold by a machine by the total number of “distinct” days.
 #Hint: Check function month() to do the date restriction.
 
