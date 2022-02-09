@@ -50,8 +50,9 @@ transactional %>%
   summarise(sales = n(),active = unique(day(as.Date(date)))) %>% 
   summarise(sales = unique(sales),active_days = n()) %>%
   left_join(Machines[,c('machine','small_machine')],by='machine') %>% 
+  mutate(daily_sales_per_machine=sales/active_days)
   group_by(small_machine) %>% 
-  summarise(mean(sales/active_days))
+  summarise(mean(daily_sales_per_machine))
   
 
 #Why do you think there is such a difference? Give at least 2 possible reasons.
@@ -95,20 +96,26 @@ summary(Machines$income_average)
 
 #Answer: Yes obviously exists outliers since the max and mean value are far from median
 #1. drop the top 5% outliers
-quantile(Machines$income_average,0.95,na.rm = T)
+Machines[Machines$income_average<quantile(Machines$income_average,0.95,na.rm = T),]
 
 #2. replace outlier's value by 95%percentile 
 
+Machines[Machines$income_average>=quantile(Machines$income_average,0.95,na.rm = T)&!is.na(Machines$income_average),'income_average']=quantile(Machines$income_average,0.95,na.rm = T)
 #3. nature log - since they are all positive number
+Machines[!is.na(Machines$income_average),'income_average']=log(Machines[!is.na(Machines$income_average),'income_average'])
+
 
 #b)Can you give three possibilities on how to treat the NA cases? Which option
 #would you choose and why? Provide code with your answer
 
 #1. fill with median
+Machines[is.na(Machines$income_average),'income_average'] = median(Machines$income_average,na.rm = T)
 
 #2. drop them missing value
+remove_missing(Machines,vars = 'income_average')
 
-#3. 
+#3. fill with zero
+Machines[is.na(Machines$income_average),'income_average'] = 0
 
 #Hint: Take a look at the relation between having NA in the income average 
 #and the average daily items.
