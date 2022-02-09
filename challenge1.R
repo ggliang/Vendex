@@ -53,6 +53,7 @@ transactional %>%
   group_by(small_machine) %>% 
   summarise(mean(sales/active_days))
   
+
 #Why do you think there is such a difference? Give at least 2 possible reasons.
 
 ######Add comment here
@@ -93,11 +94,22 @@ summary(Machines$income_average)
 #a) Are there outliers? How would you treat them? Provide code with your answer
 
 #Answer: Yes obviously exists outliers since the max and mean value are far from median
-
+#1. drop the top 5% outliers
 quantile(Machines$income_average,0.95,na.rm = T)
+
+#2. replace outlier's value by 95%percentile 
+
+#3. nature log - since they are all positive number
 
 #b)Can you give three possibilities on how to treat the NA cases? Which option
 #would you choose and why? Provide code with your answer
+
+#1. fill with median
+
+#2. drop them missing value
+
+#3. 
+
 #Hint: Take a look at the relation between having NA in the income average 
 #and the average daily items.
 
