@@ -1,58 +1,68 @@
 library(dplyr)
 library(lubridate)
-Machines <- read.csv("./machine_data.csv")
-#1. [2 points] General overview of the data: 
+library(ggplot2)
 
+# Question 1 --------------------------------------------------------------
+
+
+
+#1. [2 points] General overview of the data: 
+Machines <- read.csv("./machine_data.csv")
 #Machines:
-  #a. How many machines are there? - 2495
+  #*a. How many machines are there? ----
+  #- 2495
   dim(Machines)[1]
   
-  #b. What percentage of them are small?
+  #*b. What percentage of them are small? ----
   mean(Machines$small_machine)
-#  Hint: dt %>% group_by(column_name) %>% n()will tell you how many rows
-#in data table dt fulfill each column_name value
-#c. How do they distribute in terms of location type i.e. transport, petrol station?
-  Machines %>% 
-    group_by(location_type) %>% 
-    summarise(n())
+  #  Hint: dt %>% group_by(column_name) %>% n()will tell you how many rows
+  #in data table dt fulfill each column_name value
   
-#  Products
+  #*c. How do they distribute in terms of location type i.e. transport, petrol station? ----
+    Machines %>% 
+      group_by(location_type) %>% 
+      summarise(n())
+  
+  #  Products
+    
+  
+  #*d. How many products are there? Which category has the highest number of products? ----
   Products <- read.csv("./product_data.csv")
+  dim(Products)[1]
+  Products %>% 
+    group_by(category) %>% 
+    summarise(n()) %>% 
+    head(1)
   
-#d. How many products are there? Which category has the highest number of products?
-dim(Products)[1]
-Products %>% 
-  group_by(category) %>% 
-  summarise(n()) %>% 
-  head(1)
-#e. Which category has the highest and lowest average price? And within snacks or drinks?
-Products %>% 
-  group_by(category) %>% 
-  summarise(avg_price = mean(price)) %>% 
-  arrange(desc(avg_price)) %>% 
-  tail(1)
-Products %>% 
-  group_by(category) %>% 
-  summarise(avg_price = mean(price)) %>% 
-  arrange(desc(avg_price)) %>% 
-  head(1)
+  #*e. Which category has the highest and lowest average price? And within snacks or drinks? ----
+  Products %>% 
+    group_by(category) %>% 
+    summarise(avg_price = mean(price)) %>% 
+    arrange(desc(avg_price)) %>% 
+    tail(1)
+  Products %>% 
+    group_by(category) %>% 
+    summarise(avg_price = mean(price)) %>% 
+    arrange(desc(avg_price)) %>% 
+    head(1)
 
-#Transactional data
-transactional <- read.csv("./transactional_data.csv")
-#f. Restricting the transactional data to March 2017, what’s the average daily items
-#among small and big machines?. 
-#transactional <- transactional[1:10000,]
+  #Transactional data
+  
+  #*f. Restricting the transactional data to March 2017, what’s the average daily items ----
+  transactional <- read.csv("./transactional_data.csv")
+  #among small and big machines?. 
+  #transactional <- transactional[1:10000,]
 
-#transactional <- left_join(transactional,Machines[,c('machine','small_machine')],by='machine')
-transactional %>% 
-  filter(month(as.Date(date))==3 & year(as.Date(date))==2017) %>% 
-  group_by(machine) %>% 
-  summarise(sales = n(),active = unique(day(as.Date(date)))) %>% 
-  summarise(sales = unique(sales),active_days = n()) %>%
-  left_join(Machines[,c('machine','small_machine')],by='machine') %>% 
-  mutate(daily_sales_per_machine=sales/active_days)
-  group_by(small_machine) %>% 
-  summarise(mean(daily_sales_per_machine))
+  #transactional <- left_join(transactional,Machines[,c('machine','small_machine')],by='machine')
+  transactional %>% 
+    filter(month(as.Date(date))==3 & year(as.Date(date))==2017) %>% 
+    group_by(machine) %>% 
+    summarise(sales = n(),active = unique(day(as.Date(date)))) %>% 
+    summarise(sales = unique(sales),active_days = n()) %>%
+    left_join(Machines[,c('machine','small_machine')],by='machine') %>% 
+    mutate(daily_sales_per_machine=sales/active_days) %>% 
+    group_by(small_machine) %>% 
+    summarise(mean(daily_sales_per_machine))
   
 
 #Why do you think there is such a difference? Give at least 2 possible reasons.
@@ -61,6 +71,9 @@ transactional %>%
 
 #Note: To calculate daily sales consider only the “active days” of a machine to exclude machine failures. For that, divide the number of items sold by a machine by the total number of “distinct” days.
 #Hint: Check function month() to do the date restriction.
+
+# Question 2 --------------------------------------------------------------
+
 
 #2. [2 points] Consider the following plot of the number of items sold per machine and day
 #Let us focus on the different patterns present in the data:
@@ -84,9 +97,12 @@ daily_sales_type <- transactional %>%
 
 daily_sales_type <- left_join(daily_sales_type,daily_active_machines,by='as.Date(date)')
 daily_sales_type$daily_sales = daily_sales_type$total_sales/daily_sales_type$active_machines
-library(ggplot2)
+
 ggplot(daily_sales_type, aes(x = daily_sales_type$`as.Date(date)`, y = daily_sales_type$daily_sales, colour = daily_sales_type$type_drink_snack)) +
   geom_line()
+
+
+# Question 3 --------------------------------------------------------------
 
 
 #3. [2 points] Given the following distribution of average income:
@@ -122,9 +138,17 @@ Machines[is.na(Machines$income_average),'income_average'] = 0
 
 
 
+# Question 4 --------------------------------------------------------------
+
+
 #4.[2 points] According to the following boxplot, what is the median number of
 #hotels in the machine area?
 boxplot(Machines$num_hotels)
+median(Machines$num_hotels)
+
+
+# Question 5 --------------------------------------------------------------
+
 
 #5.[2 points] In this exercise we will build a location score that tells us 
 #what’s the average daily items per machine depending on the location it is placed. 
@@ -133,3 +157,21 @@ boxplot(Machines$num_hotels)
 #This can be used to detect problems in machines (i.e. illumination, bad placement within a station etc.)
 
 #For that, you will build a linear model to predict machine daily items using the following features:
+#1. Machine size (big or small) 
+#2. Income of the area 
+#3. Number of routes in the area 
+#4. Number of hotels with 4 and 5 stars in the area 
+#5. 0-1 Indicator of whether the machine has train_AvgDailyPassengers informed 
+#meaning it is a petrol station or other type of location 
+#Hint: You can generate an indicator variable of this sort using the syntax  
+#6. Number of other Vendex machines in the area 
+Machines <- Machines %>% 
+  mutate(near_station = ifelse(is.na(train_AvgDailyPassengers),1,0)) 
+set.seed(2022)
+Machines_split <- initial_split(Machines, prop = .8, strata = small_machine)
+Machines_train <- training(Machines_split)
+Machines_test <- testing(Machines_split)
+
+model1 <- lm(formula = machine_daily_sales ~ small_machine + income_average
+                        + total_number_of_routes_600 + num_hotels_45
+                        + near_station + num_vendex_nearby_300, data = Machines_train)
