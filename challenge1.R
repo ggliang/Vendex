@@ -165,8 +165,20 @@ median(Machines$num_hotels)
 #meaning it is a petrol station or other type of location 
 #Hint: You can generate an indicator variable of this sort using the syntax  
 #6. Number of other Vendex machines in the area 
+
+#*a. Do all variables show statistical significance? Which ones doesn’t? How do you know? ----
 Machines <- Machines %>% 
-  mutate(near_station = ifelse(is.na(train_AvgDailyPassengers),1,0)) 
+  mutate(near_station = ifelse(is.na(train_AvgDailyPassengers),0,1)) 
+
+machine_daily_sale <- transactional %>% 
+  group_by(machine) %>% 
+  summarise(sales = n(),active = unique(date)) %>% 
+  summarise(sales = unique(sales),active_days = n()) %>%
+  mutate(machine_daily_sales=sales/active_days)
+
+Machines <- left_join(Machines,machine_daily_sale[,c('machine','machine_daily_sales')],by='machine')
+
+
 set.seed(2022)
 Machines_split <- initial_split(Machines, prop = .8, strata = small_machine)
 Machines_train <- training(Machines_split)
@@ -175,3 +187,89 @@ Machines_test <- testing(Machines_split)
 model1 <- lm(formula = machine_daily_sales ~ small_machine + income_average
                         + total_number_of_routes_600 + num_hotels_45
                         + near_station + num_vendex_nearby_300, data = Machines_train)
+
+summary(model1)
+
+
+
+#*b. Build another linear model but this time instead of using the variables ----
+#“total_number_of_routes_600 use the log of that variable in base 10 calling it 
+#“log_transport”. Does this new variable show statistical significance?  
+
+Machines <- Machines %>% 
+  mutate(log_transport = log(total_number_of_routes_600,10))
+
+set.seed(2022)
+Machines_split <- initial_split(Machines, prop = .8, strata = small_machine)
+Machines_train <- training(Machines_split)
+Machines_test <- testing(Machines_split)
+
+model2 <- lm(formula = machine_daily_sales ~ small_machine + income_average
+             + log_transport + num_hotels_45
+             + near_station + num_vendex_nearby_300, data = Machines_train)
+
+summary(model2)
+
+theme <- theme_light()
+predictions_vs_actual_plot <- function(df, x, y, title){
+  x <- enquo(x)
+  y <- enquo(y)
+  ggplot(df, aes(!!x, !!y)) +
+    geom_point(alpha = .5) +
+    geom_abline(intercept = 0, slope = 1, color = 'orange') +
+    ggtitle(title) +
+    theme
+}
+
+
+#*c. How many daily items less do small machines sell all other factors remaining equal? ----
+final_model = model2
+##1.78 less
+
+
+#*d. What’s effect on machine sales does having other nearby machines all other ----
+#factors remaining equal? 
+# 0.1 less or we could say very small influence
+
+
+#*e. Ranking all machines according to the final_model, what are the real daily sales of ----
+#the top20% machines with respect to your model prediction? And the real daily 
+#sales of the bottom20% machines according to your model? What’s the 
+#top20%/bottom20% ratio? 
+
+real_top20 <- Machines[Machines$machine_daily_sales>quantile(Machines$machine_daily_sales,.80),]
+real_bot20 <- Machines[Machines$machine_daily_sales<quantile(Machines$machine_daily_sales,.20),]
+
+real_top20 <- real_top20 %>% 
+  bind_cols(predict(final_model, newdata = real_top20)) %>% 
+  rename(.preds = ...15)
+
+predictions_vs_actual_plot(df = remove_missing(real_top20), x = machine_daily_sales, y = .preds, title = 'Linear regression: Test data')
+
+real_bot20 <- real_bot20 %>% 
+  bind_cols(predict(final_model, newdata = real_bot20)) %>% 
+  rename(.preds = ...15)
+
+predictions_vs_actual_plot(df = remove_missing(real_bot20), x = machine_daily_sales, y = .preds, title = 'Linear regression: Test data')
+
+
+#*f. Given the following 2 locations for a big machine: ----
+#i. Supermarket entrance, 2 nearby hotels of 4 stars, 20 transport routes, no 
+#nearby machines 
+#ii. Transport station, no nearby hotels of 4 or 5 stars, 10 transport routes 
+#nearby, 3 nearby Vendex machines 
+#Which location would you choose and why? 
+
+# the second
+
+
+new_data <- data.frame(
+  small_machine = 1,
+  income_average = 10,
+  log_transport = c(log(20,10),log(10,10)),
+  num_hotels_45 = c(2,0),
+  near_station = c(0,1),
+  num_vendex_nearby_300 = c(0,3)
+)
+
+predict(final_model, newdata = new_data)
