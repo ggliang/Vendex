@@ -168,7 +168,7 @@ median(Machines$num_hotels)
 
 # Question 5 --------------------------------------------------------------
 
-
+library(rsample)
 #5.[2 points] In this exercise we will build a location score that tells us 
 #what’s the average daily items per machine depending on the location it is placed. 
 #This model could be used to a) Decide in which locations to place new machines 
