@@ -135,11 +135,45 @@ length(transactional_fail[transactional_fail$delta>=root_60&!is.na(transactional
 #[For simplicity, consider the total profit to be the margin per item times 
 #the number of items in the period]
 
+margin = 1.7
+operation_cost = 10
+alarm_60 <- transactional_fail[transactional_fail$delta>=root_60&!is.na(transactional_fail$delta),]
 
+alarm_60 <- alarm_60 %>% 
+  mutate(threshold_hours=root_60*24/daily_sales_per_machine) %>% 
+  mutate(threshold_hours_fixed = threshold_hours+1.5) %>% 
+  mutate(delta_fixed = threshold_hours_fixed/(24/daily_sales_per_machine)) %>% 
+  mutate(won_sales = (delta-delta_fixed)*failure)
 
+extra_revenue_60 <- sum(alarm_60$won_sales)*margin
+false_alarm_cost_60 <- length(alarm_60[alarm_60$failure==0,'failure'])*operation_cost
+extra_profit_60 <- extra_revenue_60-false_alarm_cost_60
+
+total_revenue <- length(transactional_fail[,'machine'])*margin
+
+extra_profit_60/total_revenue
+
+#4.93% increase
 
 #ii. And if we set the EWS only with the high-risk alarms?
 
 
+margin = 1.7
+operation_cost = 10
+alarm_80 <- transactional_fail[transactional_fail$delta>=root_80&!is.na(transactional_fail$delta),]
 
+alarm_80 <- alarm_80 %>% 
+  mutate(threshold_hours=root_80*24/daily_sales_per_machine) %>% 
+  mutate(threshold_hours_fixed = threshold_hours+1.5) %>% 
+  mutate(delta_fixed = threshold_hours_fixed/(24/daily_sales_per_machine)) %>% 
+  mutate(won_sales = (delta-delta_fixed)*failure)
+
+extra_revenue_80 <- sum(alarm_80$won_sales)*margin
+false_alarm_cost_80 <- length(alarm_80[alarm_80$failure==0,'failure'])*operation_cost
+extra_profit_80 <- extra_revenue_80-false_alarm_cost_80
+
+total_revenue <- length(transactional_fail[,'machine'])*margin
+
+extra_profit_80/total_revenue
+#4.55% increase
   
