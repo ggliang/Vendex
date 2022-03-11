@@ -32,7 +32,7 @@ transactional_fail <- transactional_fail %>%
 
 machine_daily_average <- transactional %>% 
   group_by(machine) %>% 
-  summarise(sales = n(),active = unique(day(as.Date(date)))) %>% 
+  summarise(sales = n(),active = unique(as.Date(date))) %>% 
   summarise(sales = unique(sales),active_days = n()) %>%
   mutate(daily_sales_per_machine=sales/active_days) %>% 
   summarise(machine,daily_sales_per_machine)
